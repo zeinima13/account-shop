@@ -6,6 +6,10 @@ import AdminProducts from '../views/admin/Products.vue'
 const routes = [
   {
     path: '/',
+    redirect: '/shop'
+  },
+  {
+    path: '/shop',
     name: 'shop',
     component: Shop
   },
