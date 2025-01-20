@@ -1,111 +1,194 @@
 <template>
   <div class="shop-container">
-    <div class="header">
-      <div class="logo">账户商店</div>
-    </div>
-    <div class="main-content">
-      <div class="left-menu">
-        <div class="category-title">账户商品</div>
-        <el-menu
-          :default-active="activeCategory"
-          class="category-menu"
-          @select="handleCategorySelect"
+    <div class="sidebar">
+      <h2>商品分类</h2>
+      <el-menu
+        :default-active="activeCategory"
+        class="category-menu"
+        @select="handleCategorySelect"
+      >
+        <el-menu-item
+          v-for="category in categories"
+          :key="category.id"
+          :index="category.id"
         >
-          <el-menu-item v-for="cat in categories" :key="cat.id" :index="cat.id">
-            {{ cat.name }}
-          </el-menu-item>
-        </el-menu>
-      </div>
-      
-      <div class="right-content">
-        <div class="product-list">
-          <div v-for="product in products" :key="product.id" class="product-item" @click="selectProduct(product.id)">
-            <div class="product-info">
-              <div class="product-name">{{ product.name }}</div>
-              <div class="product-details" v-if="selectedProduct === product.id">
-                <div class="price">价格: {{ product.price }} USDT</div>
-                <div class="stock">库存: {{ product.stock }}</div>
-                <el-input v-model="email" placeholder="请输入邮箱" class="email-input" />
-                <el-button type="primary" class="order-btn" @click="submitOrder(product)">
-                  立即下单
-                </el-button>
-              </div>
-            </div>
+          {{ category.name }}
+        </el-menu-item>
+      </el-menu>
+    </div>
+
+    <div class="main-content">
+      <div class="products-grid">
+        <el-card
+          v-for="product in products"
+          :key="product.id"
+          class="product-card"
+          :body-style="{ padding: '0px' }"
+        >
+          <div class="product-image">
+            <el-image
+              :src="product.image"
+              fit="cover"
+              :lazy="true"
+            >
+              <template #error>
+                <div class="image-placeholder">
+                  <el-icon><Picture /></el-icon>
+                </div>
+              </template>
+            </el-image>
           </div>
-        </div>
+          <div class="product-info">
+            <h3>{{ product.name }}</h3>
+            <div class="product-meta">
+              <span class="price">¥{{ product.price }}</span>
+              <span class="stock">库存: {{ product.stock }}</span>
+            </div>
+            <el-button
+              type="primary"
+              size="small"
+              @click="handleBuyClick(product)"
+              :disabled="product.stock <= 0"
+            >
+              {{ product.stock > 0 ? '立即购买' : '暂时缺货' }}
+            </el-button>
+          </div>
+        </el-card>
       </div>
     </div>
+
+    <el-dialog
+      v-model="dialogVisible"
+      title="确认订单"
+      width="30%"
+    >
+      <div class="order-form">
+        <el-form
+          ref="orderForm"
+          :model="orderForm"
+          :rules="orderRules"
+          label-width="80px"
+        >
+          <el-form-item label="邮箱" prop="email">
+            <el-input v-model="orderForm.email" placeholder="请输入邮箱地址"></el-input>
+          </el-form-item>
+          <el-form-item label="数量" prop="quantity">
+            <el-input-number
+              v-model="orderForm.quantity"
+              :min="1"
+              :max="selectedProduct ? selectedProduct.stock : 1"
+            ></el-input-number>
+          </el-form-item>
+          <div class="order-total">
+            总价: ¥{{ orderTotal }}
+          </div>
+        </el-form>
+      </div>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="dialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="handleOrderConfirm">
+            确认下单
+          </el-button>
+        </span>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script>
-import { ref, reactive, computed } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { Picture } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 
 export default {
   name: 'Shop',
+  components: {
+    Picture
+  },
   setup() {
     const router = useRouter()
     const activeCategory = ref('1')
-    const email = ref('')
+    const dialogVisible = ref(false)
     const selectedProduct = ref(null)
-
+    
     const categories = [
-      { id: '1', name: '微博产品' },
-      { id: '2', name: '微博白号' },
-      { id: '3', name: '微博号' }
+      { id: '1', name: '游戏账号' },
+      { id: '2', name: '会员账号' },
+      { id: '3', name: '流媒体账号' },
+      { id: '4', name: '其他账号' }
     ]
 
-    const products = ref([
-      { 
-        id: 1, 
-        categoryId: '1',
-        name: '微博-信用分510以上---6-9级老号', 
+    const products = [
+      {
+        id: '1',
+        name: 'Steam账号',
         price: 99,
-        stock: 100
+        stock: 10,
+        category: '1',
+        image: '/product-images/steam.png'
       },
       {
-        id: 2,
-        categoryId: '1',
-        name: '微博0-20级',
-        price: 49,
-        stock: 200
-      },
-      {
-        id: 3,
-        categoryId: '2',
-        name: '微博白号',
+        id: '2',
+        name: 'Netflix会员',
         price: 29,
-        stock: 500
+        stock: 20,
+        category: '3',
+        image: '/product-images/netflix.png'
+      },
+      {
+        id: '3',
+        name: 'Spotify会员',
+        price: 19,
+        stock: 15,
+        category: '3',
+        image: '/product-images/spotify.png'
       }
-    ])
+    ]
 
-    const handleCategorySelect = (index) => {
-      activeCategory.value = index
-      selectedProduct.value = null
-    }
-
-    const filteredProducts = computed(() => {
-      return products.value.filter(p => p.categoryId === activeCategory.value)
+    const orderForm = ref({
+      email: '',
+      quantity: 1
     })
 
-    const selectProduct = (productId) => {
-      selectedProduct.value = selectedProduct.value === productId ? null : productId
+    const orderRules = {
+      email: [
+        { required: true, message: '请输入邮箱地址', trigger: 'blur' },
+        { type: 'email', message: '请输入正确的邮箱地址', trigger: 'blur' }
+      ],
+      quantity: [
+        { required: true, message: '请选择购买数量', trigger: 'blur' }
+      ]
     }
 
-    const submitOrder = (product) => {
-      if (!email.value) {
-        ElMessage.error('请输入邮箱')
-        return
-      }
+    const orderTotal = computed(() => {
+      if (!selectedProduct.value) return 0
+      return selectedProduct.value.price * orderForm.value.quantity
+    })
 
+    const handleCategorySelect = (categoryId) => {
+      activeCategory.value = categoryId
+      // 这里可以根据分类筛选商品
+    }
+
+    const handleBuyClick = (product) => {
+      selectedProduct.value = product
+      orderForm.value.quantity = 1
+      dialogVisible.value = true
+    }
+
+    const handleOrderConfirm = () => {
+      if (!selectedProduct.value) return
+      
+      // 这里可以添加表单验证
       router.push({
         name: 'payment',
         query: {
-          productId: product.id,
-          email: email.value,
-          amount: product.price
+          productId: selectedProduct.value.id,
+          quantity: orderForm.value.quantity,
+          email: orderForm.value.email,
+          amount: orderTotal.value
         }
       })
     }
@@ -113,12 +196,15 @@ export default {
     return {
       activeCategory,
       categories,
-      products: filteredProducts,
-      email,
+      products,
+      dialogVisible,
       selectedProduct,
+      orderForm,
+      orderRules,
+      orderTotal,
       handleCategorySelect,
-      selectProduct,
-      submitOrder
+      handleBuyClick,
+      handleOrderConfirm
     }
   }
 }
@@ -126,77 +212,115 @@ export default {
 
 <style scoped>
 .shop-container {
+  display: flex;
   min-height: 100vh;
   background: #f5f7fa;
 }
 
-.header {
-  background: linear-gradient(45deg, #4b9eff, #7cc2ff);
-  padding: 20px;
-  color: white;
+.sidebar {
+  width: 200px;
+  background: white;
+  padding: 20px 0;
+  border-right: 1px solid #e6e6e6;
 }
 
-.logo {
-  font-size: 24px;
-  font-weight: bold;
+.sidebar h2 {
+  padding: 0 20px;
+  margin: 0 0 20px 0;
+  font-size: 18px;
+  color: #303133;
+}
+
+.category-menu {
+  border-right: none;
 }
 
 .main-content {
-  display: flex;
-  margin: 20px;
+  flex: 1;
+  padding: 20px;
+}
+
+.products-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   gap: 20px;
 }
 
-.left-menu {
-  width: 250px;
-  background: white;
+.product-card {
   border-radius: 8px;
+  overflow: hidden;
+  transition: all 0.3s;
+}
+
+.product-card:hover {
+  transform: translateY(-5px);
   box-shadow: 0 2px 12px 0 rgba(0,0,0,0.1);
 }
 
-.category-title {
+.product-image {
+  height: 200px;
+  overflow: hidden;
+}
+
+.product-image .el-image {
+  width: 100%;
+  height: 100%;
+}
+
+.image-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f5f7fa;
+  color: #909399;
+  font-size: 24px;
+}
+
+.product-info {
   padding: 15px;
+}
+
+.product-info h3 {
+  margin: 0 0 10px 0;
   font-size: 16px;
+  color: #303133;
+}
+
+.product-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.price {
+  color: #f56c6c;
+  font-size: 18px;
   font-weight: bold;
-  border-bottom: 1px solid #eee;
 }
 
-.right-content {
-  flex: 1;
-  background: white;
-  border-radius: 8px;
-  padding: 20px;
-  box-shadow: 0 2px 12px 0 rgba(0,0,0,0.1);
-}
-
-.product-item {
-  padding: 15px;
-  border-bottom: 1px solid #eee;
-  cursor: pointer;
-}
-
-.product-name {
-  color: #333;
+.stock {
+  color: #909399;
   font-size: 14px;
 }
 
-.product-details {
-  margin-top: 15px;
-  padding: 15px;
-  background: #f8f9fa;
-  border-radius: 4px;
+.order-form {
+  padding: 20px 0;
 }
 
-.price, .stock {
-  margin-bottom: 10px;
-  color: #666;
+.order-total {
+  text-align: right;
+  padding: 10px 0;
+  font-size: 16px;
+  color: #f56c6c;
+  font-weight: bold;
 }
 
-.email-input {
-  margin: 10px 0;
-}
-
-.order-btn {
-  width: 100%;
+.dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
 }
 </style>
