@@ -1,23 +1,8 @@
 <template>
-  <router-view />
+  <router-view v-slot="{ Component }">
+    <component :is="Component" />
+  </router-view>
 </template>
-
-<script>
-import { ElConfigProvider } from 'element-plus'
-import zhCn from 'element-plus/dist/locale/zh-cn.mjs'
-
-export default {
-  name: 'App',
-  components: {
-    ElConfigProvider
-  },
-  setup() {
-    return {
-      zhCn
-    }
-  }
-}
-</script>
 
 <style>
 #app {
@@ -35,5 +20,6 @@ export default {
 body {
   margin: 0;
   padding: 0;
+  background: #f5f7fa;
 }
 </style>
