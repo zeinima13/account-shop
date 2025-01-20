@@ -1,52 +1,47 @@
 <template>
   <div class="shop-container">
-    <el-container>
-      <el-aside width="200px">
+    <div class="header">
+      <div class="logo">账户商店</div>
+    </div>
+    <div class="main-content">
+      <div class="left-menu">
+        <div class="category-title">账户商品</div>
         <el-menu
           :default-active="activeCategory"
+          class="category-menu"
           @select="handleCategorySelect"
         >
           <el-menu-item v-for="cat in categories" :key="cat.id" :index="cat.id">
             {{ cat.name }}
           </el-menu-item>
         </el-menu>
-      </el-aside>
+      </div>
       
-      <el-main>
-        <el-row :gutter="20">
-          <el-col :span="24" v-for="product in products" :key="product.id">
-            <el-card class="product-card">
-              <div class="product-info">
-                <h3>{{ product.name }}</h3>
-                <div class="price">¥{{ product.price }}</div>
+      <div class="right-content">
+        <div class="product-list">
+          <div v-for="product in products" :key="product.id" class="product-item" @click="selectProduct(product.id)">
+            <div class="product-info">
+              <div class="product-name">{{ product.name }}</div>
+              <div class="product-details" v-if="selectedProduct === product.id">
+                <div class="price">价格: {{ product.price }} USDT</div>
                 <div class="stock">库存: {{ product.stock }}</div>
+                <el-input v-model="email" placeholder="请输入邮箱" class="email-input" />
+                <el-button type="primary" class="order-btn" @click="submitOrder(product)">
+                  立即下单
+                </el-button>
               </div>
-              <div class="purchase-form">
-                <el-form :model="orderForm" label-width="80px">
-                  <el-form-item label="数量">
-                    <el-input-number 
-                      v-model="orderForm[product.id]" 
-                      :min="1" 
-                      :max="product.stock"
-                    />
-                  </el-form-item>
-                  <el-form-item label="邮箱">
-                    <el-input v-model="email" placeholder="请输入邮箱"/>
-                  </el-form-item>
-                  <el-button type="primary" @click="submitOrder(product)">立即下单</el-button>
-                </el-form>
-              </div>
-            </el-card>
-          </el-col>
-        </el-row>
-      </el-main>
-    </el-container>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script>
-import { ref, reactive } from 'vue'
+import { ref, reactive, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { ElMessage } from 'element-plus'
 
 export default {
   name: 'Shop',
@@ -54,7 +49,7 @@ export default {
     const router = useRouter()
     const activeCategory = ref('1')
     const email = ref('')
-    const orderForm = reactive({})
+    const selectedProduct = ref(null)
 
     const categories = [
       { id: '1', name: '微博产品' },
@@ -76,12 +71,27 @@ export default {
         name: '微博0-20级',
         price: 49,
         stock: 200
+      },
+      {
+        id: 3,
+        categoryId: '2',
+        name: '微博白号',
+        price: 29,
+        stock: 500
       }
     ])
 
     const handleCategorySelect = (index) => {
       activeCategory.value = index
-      // 这里应该调用API获取该分类下的商品
+      selectedProduct.value = null
+    }
+
+    const filteredProducts = computed(() => {
+      return products.value.filter(p => p.categoryId === activeCategory.value)
+    })
+
+    const selectProduct = (productId) => {
+      selectedProduct.value = selectedProduct.value === productId ? null : productId
     }
 
     const submitOrder = (product) => {
@@ -89,20 +99,13 @@ export default {
         ElMessage.error('请输入邮箱')
         return
       }
-      
-      const quantity = orderForm[product.id]
-      if (!quantity) {
-        ElMessage.error('请选择购买数量')
-        return
-      }
 
-      // 跳转到支付页面
       router.push({
         name: 'payment',
         query: {
           productId: product.id,
-          quantity,
-          email: email.value
+          email: email.value,
+          amount: product.price
         }
       })
     }
@@ -110,10 +113,11 @@ export default {
     return {
       activeCategory,
       categories,
-      products,
+      products: filteredProducts,
       email,
-      orderForm,
+      selectedProduct,
       handleCategorySelect,
+      selectProduct,
       submitOrder
     }
   }
@@ -122,28 +126,77 @@ export default {
 
 <style scoped>
 .shop-container {
-  height: 100vh;
+  min-height: 100vh;
+  background: #f5f7fa;
 }
 
-.product-card {
-  margin-bottom: 20px;
+.header {
+  background: linear-gradient(45deg, #4b9eff, #7cc2ff);
+  padding: 20px;
+  color: white;
 }
 
-.product-info {
-  margin-bottom: 20px;
+.logo {
+  font-size: 24px;
+  font-weight: bold;
 }
 
-.price {
-  color: #f56c6c;
-  font-size: 20px;
+.main-content {
+  display: flex;
+  margin: 20px;
+  gap: 20px;
+}
+
+.left-menu {
+  width: 250px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 12px 0 rgba(0,0,0,0.1);
+}
+
+.category-title {
+  padding: 15px;
+  font-size: 16px;
+  font-weight: bold;
+  border-bottom: 1px solid #eee;
+}
+
+.right-content {
+  flex: 1;
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 12px 0 rgba(0,0,0,0.1);
+}
+
+.product-item {
+  padding: 15px;
+  border-bottom: 1px solid #eee;
+  cursor: pointer;
+}
+
+.product-name {
+  color: #333;
+  font-size: 14px;
+}
+
+.product-details {
+  margin-top: 15px;
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 4px;
+}
+
+.price, .stock {
+  margin-bottom: 10px;
+  color: #666;
+}
+
+.email-input {
   margin: 10px 0;
 }
 
-.stock {
-  color: #909399;
-}
-
-.purchase-form {
-  max-width: 400px;
+.order-btn {
+  width: 100%;
 }
 </style>
