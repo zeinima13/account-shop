@@ -1,5 +1,23 @@
 <template>
   <div class="shop-container">
+    <div class="shop-header">
+      <div class="header-image">
+        <img src="https://via.placeholder.com/800x200" alt="Header Image">
+      </div>
+      <div class="info-section">
+        <div class="notice">
+          <h3>Notice</h3>
+          <p>This is a notice.</p>
+        </div>
+        <div class="merchant-info">
+          <h3>Merchant Info</h3>
+          <p>This is merchant info.</p>
+        </div>
+        <div class="contact">
+          <p>Contact us at <a href="mailto:example@example.com">example@example.com</a></p>
+        </div>
+      </div>
+    </div>
     <div class="order-form">
       <el-form @submit.prevent="submitOrder">
         <!-- 商品类型选择 -->
@@ -195,9 +213,55 @@ export default {
 .shop-container {
   min-height: 100vh;
   background: #f5f7fa;
-  display: flex;
-  justify-content: center;
   padding: 20px;
+}
+
+.shop-header {
+  max-width: 800px;
+  margin: 0 auto 20px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 12px 0 rgba(0,0,0,0.1);
+  overflow: hidden;
+}
+
+.header-image {
+  width: 100%;
+  height: 200px;
+  overflow: hidden;
+  background: #e5e9f2;
+}
+
+.header-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.info-section {
+  padding: 20px;
+}
+
+.notice, .merchant-info {
+  margin-bottom: 20px;
+}
+
+.notice h3, .merchant-info h3 {
+  margin: 0 0 10px;
+  color: #303133;
+  font-size: 16px;
+}
+
+.notice p, .merchant-info p {
+  margin: 5px 0;
+  color: #606266;
+  font-size: 14px;
+}
+
+.contact {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #ebeef5;
 }
 
 .order-form {
