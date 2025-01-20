@@ -18,25 +18,10 @@
     </div>
 
     <div class="main-content">
-      <div class="products-grid">
-        <el-card
-          v-for="product in products"
-          :key="product.id"
-          class="product-card"
-          :body-style="{ padding: '0px' }"
-        >
+      <div class="product-grid">
+        <div v-for="product in products" :key="product.id" class="product-card">
           <div class="product-image">
-            <el-image
-              :src="product.image"
-              fit="cover"
-              :lazy="true"
-            >
-              <template #error>
-                <div class="image-placeholder">
-                  <el-icon><Picture /></el-icon>
-                </div>
-              </template>
-            </el-image>
+            <img :src="product.image" :alt="product.name">
           </div>
           <div class="product-info">
             <h3>{{ product.name }}</h3>
@@ -53,7 +38,7 @@
               {{ product.stock > 0 ? '立即购买' : '暂时缺货' }}
             </el-button>
           </div>
-        </el-card>
+        </div>
       </div>
     </div>
 
@@ -240,70 +225,65 @@ export default {
   padding: 20px;
 }
 
-.products-grid {
+.product-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 2rem;
+  padding: 2rem;
 }
 
 .product-card {
+  background: white;
   border-radius: 8px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
   overflow: hidden;
-  transition: all 0.3s;
+  transition: transform 0.2s;
 }
 
 .product-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 2px 12px 0 rgba(0,0,0,0.1);
 }
 
 .product-image {
   height: 200px;
-  overflow: hidden;
-}
-
-.product-image .el-image {
-  width: 100%;
-  height: 100%;
-}
-
-.image-placeholder {
-  width: 100%;
-  height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #f5f7fa;
-  color: #909399;
-  font-size: 24px;
+  background: #f5f5f5;
+  padding: 1rem;
+}
+
+.product-image img {
+  max-width: 80%;
+  max-height: 80%;
+  object-fit: contain;
 }
 
 .product-info {
-  padding: 15px;
+  padding: 1.5rem;
 }
 
 .product-info h3 {
-  margin: 0 0 10px 0;
-  font-size: 16px;
-  color: #303133;
+  margin: 0 0 1rem;
+  font-size: 1.2rem;
+  color: #333;
 }
 
 .product-meta {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 15px;
+  margin-bottom: 1rem;
+  color: #666;
 }
 
 .price {
-  color: #f56c6c;
-  font-size: 18px;
+  font-size: 1.25rem;
   font-weight: bold;
+  color: #e53935;
 }
 
 .stock {
-  color: #909399;
-  font-size: 14px;
+  color: #666;
 }
 
 .order-form {
