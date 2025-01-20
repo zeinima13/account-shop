@@ -1,195 +1,191 @@
 <template>
   <div class="shop-container">
-    <div class="sidebar">
-      <h2>商品分类</h2>
-      <el-menu
-        :default-active="activeCategory"
-        class="category-menu"
-        @select="handleCategorySelect"
-      >
-        <el-menu-item
-          v-for="category in categories"
-          :key="category.id"
-          :index="category.id"
-        >
-          {{ category.name }}
-        </el-menu-item>
-      </el-menu>
-    </div>
+    <div class="order-form">
+      <el-form @submit.prevent="submitOrder">
+        <!-- 商品类型选择 -->
+        <el-form-item>
+          <el-select
+            v-model="form.productType"
+            placeholder="请选择商品类型"
+            style="width: 100%"
+          >
+            <el-option
+              v-for="type in productTypes"
+              :key="type.value"
+              :label="type.label"
+              :value="type.value"
+            />
+          </el-select>
+        </el-form-item>
 
-    <div class="main-content">
-      <div class="product-grid">
-        <div v-for="product in products" :key="product.id" class="product-card">
-          <div class="product-image">
-            <img :src="product.image" :alt="product.name">
-          </div>
-          <div class="product-info">
-            <h3>{{ product.name }}</h3>
-            <div class="product-meta">
-              <span class="price">¥{{ product.price }}</span>
-              <span class="stock">库存: {{ product.stock }}</span>
-            </div>
-            <el-button
-              type="primary"
+        <!-- 商品选择 -->
+        <el-form-item>
+          <el-select
+            v-model="form.product"
+            placeholder="请选择商品"
+            style="width: 100%"
+          >
+            <el-option
+              v-for="product in filteredProducts"
+              :key="product.id"
+              :label="product.name"
+              :value="product.id"
+            />
+          </el-select>
+        </el-form-item>
+
+        <!-- 地区选择 -->
+        <el-form-item>
+          <el-select
+            v-model="form.region"
+            placeholder="请选择地区"
+            style="width: 100%"
+          >
+            <el-option
+              v-for="region in regions"
+              :key="region.value"
+              :label="region.label"
+              :value="region.value"
+            />
+          </el-select>
+        </el-form-item>
+
+        <!-- 数量控制 -->
+        <div class="quantity-controls">
+          <div class="quantity-item" v-for="(qty, index) in quantities" :key="index">
+            <el-button 
+              circle 
               size="small"
-              @click="handleBuyClick(product)"
-              :disabled="product.stock <= 0"
-            >
-              {{ product.stock > 0 ? '立即购买' : '暂时缺货' }}
-            </el-button>
+              @click="decreaseQuantity(index)"
+            >-</el-button>
+            <span class="quantity-value">{{ qty }}</span>
+            <el-button 
+              circle 
+              size="small"
+              @click="increaseQuantity(index)"
+            >+</el-button>
           </div>
         </div>
-      </div>
-    </div>
 
-    <el-dialog
-      v-model="dialogVisible"
-      title="确认订单"
-      width="30%"
-    >
-      <div class="order-form">
-        <el-form
-          ref="orderForm"
-          :model="orderForm"
-          :rules="orderRules"
-          label-width="80px"
+        <!-- 性别选择 -->
+        <el-form-item class="gender-selection">
+          <el-radio-group v-model="form.gender">
+            <el-radio label="random">随机</el-radio>
+            <el-radio label="male">男</el-radio>
+            <el-radio label="female">女</el-radio>
+          </el-radio-group>
+        </el-form-item>
+
+        <!-- 下单提示 -->
+        <div class="order-tip">
+          下单后系统自动发送卡密到该邮箱
+        </div>
+
+        <!-- 提交按钮 -->
+        <el-button 
+          type="primary" 
+          class="submit-button"
+          @click="submitOrder"
         >
-          <el-form-item label="邮箱" prop="email">
-            <el-input v-model="orderForm.email" placeholder="请输入邮箱地址"></el-input>
-          </el-form-item>
-          <el-form-item label="数量" prop="quantity">
-            <el-input-number
-              v-model="orderForm.quantity"
-              :min="1"
-              :max="selectedProduct ? selectedProduct.stock : 1"
-            ></el-input-number>
-          </el-form-item>
-          <div class="order-total">
-            总价: ¥{{ orderTotal }}
-          </div>
-        </el-form>
-      </div>
-      <template #footer>
-        <span class="dialog-footer">
-          <el-button @click="dialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="handleOrderConfirm">
-            确认下单
-          </el-button>
-        </span>
-      </template>
-    </el-dialog>
+          立即下单
+        </el-button>
+      </el-form>
+    </div>
   </div>
 </template>
 
 <script>
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { Picture } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 
 export default {
   name: 'Shop',
-  components: {
-    Picture
-  },
   setup() {
     const router = useRouter()
-    const activeCategory = ref('1')
-    const dialogVisible = ref(false)
-    const selectedProduct = ref(null)
-    
-    const categories = [
-      { id: '1', name: '游戏账号' },
-      { id: '2', name: '会员账号' },
-      { id: '3', name: '流媒体账号' },
-      { id: '4', name: '其他账号' }
+    const form = ref({
+      productType: '',
+      product: '',
+      region: '',
+      gender: 'random'
+    })
+
+    const quantities = ref([0, 0, 0])
+
+    const productTypes = [
+      { value: 'game', label: '游戏账号' },
+      { value: 'video', label: '视频会员' },
+      { value: 'music', label: '音乐会员' }
     ]
 
-    const products = [
-      {
-        id: '1',
-        name: 'Steam账号',
-        price: 99,
-        stock: 10,
-        category: '1',
-        image: '/product-images/steam.png'
-      },
-      {
-        id: '2',
-        name: 'Netflix会员',
-        price: 29,
-        stock: 20,
-        category: '3',
-        image: '/product-images/netflix.png'
-      },
-      {
-        id: '3',
-        name: 'Spotify会员',
-        price: 19,
-        stock: 15,
-        category: '3',
-        image: '/product-images/spotify.png'
+    const products = ref([
+      { id: 1, name: 'Steam账号', type: 'game', price: 99 },
+      { id: 2, name: 'Netflix会员', type: 'video', price: 29 },
+      { id: 3, name: 'Spotify会员', type: 'music', price: 19 }
+    ])
+
+    const regions = [
+      { value: 'cn', label: '中国大陆' },
+      { value: 'hk', label: '香港' },
+      { value: 'tw', label: '台湾' }
+    ]
+
+    const filteredProducts = computed(() => {
+      if (!form.value.productType) return []
+      return products.value.filter(p => p.type === form.value.productType)
+    })
+
+    const increaseQuantity = (index) => {
+      quantities.value[index]++
+    }
+
+    const decreaseQuantity = (index) => {
+      if (quantities.value[index] > 0) {
+        quantities.value[index]--
       }
-    ]
-
-    const orderForm = ref({
-      email: '',
-      quantity: 1
-    })
-
-    const orderRules = {
-      email: [
-        { required: true, message: '请输入邮箱地址', trigger: 'blur' },
-        { type: 'email', message: '请输入正确的邮箱地址', trigger: 'blur' }
-      ],
-      quantity: [
-        { required: true, message: '请选择购买数量', trigger: 'blur' }
-      ]
     }
 
-    const orderTotal = computed(() => {
-      if (!selectedProduct.value) return 0
-      return selectedProduct.value.price * orderForm.value.quantity
-    })
+    const submitOrder = () => {
+      const selectedProduct = products.value.find(p => p.id === form.value.product)
+      if (!selectedProduct) {
+        ElMessage.warning('请选择商品')
+        return
+      }
 
-    const handleCategorySelect = (categoryId) => {
-      activeCategory.value = categoryId
-      // 这里可以根据分类筛选商品
-    }
+      const totalQuantity = quantities.value.reduce((a, b) => a + b, 0)
+      if (totalQuantity === 0) {
+        ElMessage.warning('请选择购买数量')
+        return
+      }
 
-    const handleBuyClick = (product) => {
-      selectedProduct.value = product
-      orderForm.value.quantity = 1
-      dialogVisible.value = true
-    }
+      const order = {
+        productId: selectedProduct.id,
+        productName: selectedProduct.name,
+        quantity: totalQuantity,
+        price: selectedProduct.price,
+        total: selectedProduct.price * totalQuantity,
+        region: form.value.region,
+        gender: form.value.gender
+      }
 
-    const handleOrderConfirm = () => {
-      if (!selectedProduct.value) return
-      
-      // 这里可以添加表单验证
       router.push({
         name: 'payment',
-        query: {
-          productId: selectedProduct.value.id,
-          quantity: orderForm.value.quantity,
-          email: orderForm.value.email,
-          amount: orderTotal.value
+        params: { 
+          order: JSON.stringify(order)
         }
       })
     }
 
     return {
-      activeCategory,
-      categories,
+      form,
+      quantities,
+      productTypes,
       products,
-      dialogVisible,
-      selectedProduct,
-      orderForm,
-      orderRules,
-      orderTotal,
-      handleCategorySelect,
-      handleBuyClick,
-      handleOrderConfirm
+      regions,
+      filteredProducts,
+      increaseQuantity,
+      decreaseQuantity,
+      submitOrder
     }
   }
 }
@@ -197,110 +193,66 @@ export default {
 
 <style scoped>
 .shop-container {
-  display: flex;
   min-height: 100vh;
   background: #f5f7fa;
-}
-
-.sidebar {
-  width: 200px;
-  background: white;
-  padding: 20px 0;
-  border-right: 1px solid #e6e6e6;
-}
-
-.sidebar h2 {
-  padding: 0 20px;
-  margin: 0 0 20px 0;
-  font-size: 18px;
-  color: #303133;
-}
-
-.category-menu {
-  border-right: none;
-}
-
-.main-content {
-  flex: 1;
+  display: flex;
+  justify-content: center;
   padding: 20px;
 }
 
-.product-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 2rem;
-  padding: 2rem;
-}
-
-.product-card {
+.order-form {
+  width: 100%;
+  max-width: 500px;
   background: white;
+  padding: 20px;
   border-radius: 8px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
-  transition: transform 0.2s;
+  box-shadow: 0 2px 12px 0 rgba(0,0,0,0.1);
 }
 
-.product-card:hover {
-  transform: translateY(-5px);
+.quantity-controls {
+  margin: 20px 0;
 }
 
-.product-image {
-  height: 200px;
+.quantity-item {
   display: flex;
   align-items: center;
-  justify-content: center;
-  background: #f5f5f5;
-  padding: 1rem;
+  margin-bottom: 10px;
 }
 
-.product-image img {
-  max-width: 80%;
-  max-height: 80%;
-  object-fit: contain;
+.quantity-value {
+  width: 40px;
+  text-align: center;
+  margin: 0 10px;
 }
 
-.product-info {
-  padding: 1.5rem;
+.gender-selection {
+  margin: 20px 0;
 }
 
-.product-info h3 {
-  margin: 0 0 1rem;
-  font-size: 1.2rem;
-  color: #333;
+.order-tip {
+  color: #909399;
+  font-size: 14px;
+  margin: 15px 0;
+  text-align: center;
 }
 
-.product-meta {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 1rem;
-  color: #666;
+.submit-button {
+  width: 100%;
+  margin-top: 20px;
 }
 
-.price {
-  font-size: 1.25rem;
-  font-weight: bold;
-  color: #e53935;
-}
+/* 移动端优化 */
+@media screen and (max-width: 768px) {
+  .shop-container {
+    padding: 10px;
+  }
 
-.stock {
-  color: #666;
-}
+  .order-form {
+    padding: 15px;
+  }
 
-.order-form {
-  padding: 20px 0;
-}
-
-.order-total {
-  text-align: right;
-  padding: 10px 0;
-  font-size: 16px;
-  color: #f56c6c;
-  font-weight: bold;
-}
-
-.dialog-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
+  .el-select {
+    width: 100%;
+  }
 }
 </style>
