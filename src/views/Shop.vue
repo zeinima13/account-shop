@@ -6,15 +6,18 @@
       </div>
       <div class="info-section">
         <div class="notice">
-          <h3>Notice</h3>
-          <p>This is a notice.</p>
+          <h3>商城公告</h3>
+          <p>欢迎来到我们的账号商城！我们提供优质的账号服务。</p>
+          <p>温馨提示：请在购买前仔细阅读商品说明。</p>
         </div>
         <div class="merchant-info">
-          <h3>Merchant Info</h3>
-          <p>This is merchant info.</p>
-        </div>
-        <div class="contact">
-          <p>Contact us at <a href="mailto:example@example.com">example@example.com</a></p>
+          <h3>商户信息</h3>
+          <p>商家：优质账号商城</p>
+          <p>营业时间：7x24小时</p>
+          <div class="contact">
+            <p>客服QQ：123456789</p>
+            <p>客服微信：shop123456</p>
+          </div>
         </div>
       </div>
     </div>
@@ -52,6 +55,18 @@
           </el-select>
         </el-form-item>
 
+        <!-- 商品信息 -->
+        <div v-if="selectedProduct" class="product-info">
+          <div class="info-row">
+            <span class="label">商品单价：</span>
+            <span class="value price">¥{{ selectedProduct.price }}</span>
+          </div>
+          <div class="info-row">
+            <span class="label">商品库存：</span>
+            <span class="value stock">{{ selectedProduct.stock }} 件</span>
+          </div>
+        </div>
+
         <!-- 地区选择 -->
         <el-form-item>
           <el-select
@@ -84,6 +99,20 @@
             >+</el-button>
           </div>
         </div>
+
+        <!-- 邮箱输入 -->
+        <el-form-item prop="email">
+          <el-input
+            v-model="form.email"
+            placeholder="请输入邮箱地址"
+            type="email"
+          >
+            <template #prefix>
+              <el-icon><Message /></el-icon>
+            </template>
+          </el-input>
+          <div class="email-tip">卡密将发送到此邮箱，请认真填写</div>
+        </el-form-item>
 
         <!-- 性别选择 -->
         <el-form-item class="gender-selection">
@@ -125,7 +154,8 @@ export default {
       productType: '',
       product: '',
       region: '',
-      gender: 'random'
+      gender: 'random',
+      email: ''
     })
 
     const quantities = ref([0, 0, 0])
@@ -137,9 +167,9 @@ export default {
     ]
 
     const products = ref([
-      { id: 1, name: 'Steam账号', type: 'game', price: 99 },
-      { id: 2, name: 'Netflix会员', type: 'video', price: 29 },
-      { id: 3, name: 'Spotify会员', type: 'music', price: 19 }
+      { id: 1, name: 'Steam账号', type: 'game', price: 99, stock: 100 },
+      { id: 2, name: 'Netflix会员', type: 'video', price: 29, stock: 50 },
+      { id: 3, name: 'Spotify会员', type: 'music', price: 19, stock: 200 }
     ])
 
     const regions = [
@@ -151,6 +181,10 @@ export default {
     const filteredProducts = computed(() => {
       if (!form.value.productType) return []
       return products.value.filter(p => p.type === form.value.productType)
+    })
+
+    const selectedProduct = computed(() => {
+      return products.value.find(p => p.id === form.value.product)
     })
 
     const increaseQuantity = (index) => {
@@ -183,7 +217,8 @@ export default {
         price: selectedProduct.price,
         total: selectedProduct.price * totalQuantity,
         region: form.value.region,
-        gender: form.value.gender
+        gender: form.value.gender,
+        email: form.value.email
       }
 
       router.push({
@@ -201,6 +236,7 @@ export default {
       products,
       regions,
       filteredProducts,
+      selectedProduct,
       increaseQuantity,
       decreaseQuantity,
       submitOrder
@@ -265,12 +301,53 @@ export default {
 }
 
 .order-form {
-  width: 100%;
   max-width: 500px;
+  margin: 0 auto;
   background: white;
   padding: 20px;
   border-radius: 8px;
   box-shadow: 0 2px 12px 0 rgba(0,0,0,0.1);
+}
+
+.product-info {
+  margin: 15px 0;
+  padding: 15px;
+  background: #f8f9fb;
+  border-radius: 8px;
+  border: 1px solid #e4e7ed;
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 8px 0;
+}
+
+.info-row .label {
+  color: #606266;
+  font-size: 14px;
+}
+
+.info-row .value {
+  font-weight: 500;
+  color: #303133;
+}
+
+.info-row .price {
+  color: #f56c6c;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.info-row .stock {
+  color: #67c23a;
+}
+
+.email-tip {
+  margin-top: 5px;
+  color: #909399;
+  font-size: 12px;
 }
 
 .quantity-controls {
@@ -311,12 +388,20 @@ export default {
     padding: 10px;
   }
 
-  .order-form {
+  .shop-header {
+    margin-bottom: 15px;
+  }
+
+  .header-image {
+    height: 150px;
+  }
+
+  .info-section {
     padding: 15px;
   }
 
-  .el-select {
-    width: 100%;
+  .order-form {
+    padding: 15px;
   }
 }
 </style>
