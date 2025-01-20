@@ -100,7 +100,7 @@ import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 
 export default {
-  name: 'Shop',
+  name: 'ShopPage',
   setup() {
     const router = useRouter()
     const form = ref({

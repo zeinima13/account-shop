@@ -71,7 +71,7 @@ import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 
 export default {
-  name: 'Payment',
+  name: 'PaymentPage',
   setup() {
     const route = useRoute()
     const order = ref({})
