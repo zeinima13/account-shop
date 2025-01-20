@@ -2,6 +2,7 @@
   "name": "account-shop",
   "version": "1.0.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
@@ -11,7 +12,12 @@
     "@element-plus/icons-vue": "^2.1.0",
     "axios": "^1.6.2",
     "core-js": "^3.8.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
     "element-plus": "^2.4.2",
+    "express": "^4.21.2",
+    "mongoose": "^8.9.5",
+    "node-fetch": "^3.3.2",
     "vue": "^3.3.0",
     "vue-router": "^4.2.0",
     "vuex": "^4.0.0"

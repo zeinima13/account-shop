@@ -1,6 +1,6 @@
 <template>
   <div class="shop-container">
-    <div class="shop-header">
+    <div class="shop-header card-container">
       <div class="header-image">
         <img src="https://via.placeholder.com/800x200" alt="Header Image">
       </div>
@@ -21,7 +21,7 @@
         </div>
       </div>
     </div>
-    <div class="order-form">
+    <div class="order-form card-container">
       <el-form @submit.prevent="submitOrder">
         <!-- 商品类型选择 -->
         <el-form-item>
@@ -67,6 +67,28 @@
           </div>
         </div>
 
+        <!-- 购买数量 -->
+        <div class="quantity-section">
+          <div class="quantity-title">购买数量：</div>
+          <div class="quantity-controls">
+            <div class="quantity-item">
+              <el-button 
+                circle 
+                size="small"
+                @click="decreaseQuantity"
+                :disabled="quantity <= 0"
+              >-</el-button>
+              <span class="quantity-value">{{ quantity }}</span>
+              <el-button 
+                circle 
+                size="small"
+                @click="increaseQuantity"
+                :disabled="quantity >= (selectedProduct?.stock || 0)"
+              >+</el-button>
+            </div>
+          </div>
+        </div>
+
         <!-- 地区选择 -->
         <el-form-item>
           <el-select
@@ -82,23 +104,6 @@
             />
           </el-select>
         </el-form-item>
-
-        <!-- 数量控制 -->
-        <div class="quantity-controls">
-          <div class="quantity-item" v-for="(qty, index) in quantities" :key="index">
-            <el-button 
-              circle 
-              size="small"
-              @click="decreaseQuantity(index)"
-            >-</el-button>
-            <span class="quantity-value">{{ qty }}</span>
-            <el-button 
-              circle 
-              size="small"
-              @click="increaseQuantity(index)"
-            >+</el-button>
-          </div>
-        </div>
 
         <!-- 邮箱输入 -->
         <el-form-item prop="email">
@@ -158,7 +163,7 @@ export default {
       email: ''
     })
 
-    const quantities = ref([0, 0, 0])
+    const quantity = ref(0)
 
     const productTypes = [
       { value: 'game', label: '游戏账号' },
@@ -187,35 +192,30 @@ export default {
       return products.value.find(p => p.id === form.value.product)
     })
 
-    const increaseQuantity = (index) => {
-      quantities.value[index]++
+    const increaseQuantity = () => {
+      if (quantity.value < (selectedProduct.value?.stock || 0)) {
+        quantity.value++
+      }
     }
 
-    const decreaseQuantity = (index) => {
-      if (quantities.value[index] > 0) {
-        quantities.value[index]--
+    const decreaseQuantity = () => {
+      if (quantity.value > 0) {
+        quantity.value--
       }
     }
 
     const submitOrder = () => {
-      const selectedProduct = products.value.find(p => p.id === form.value.product)
-      if (!selectedProduct) {
-        ElMessage.warning('请选择商品')
-        return
-      }
-
-      const totalQuantity = quantities.value.reduce((a, b) => a + b, 0)
-      if (totalQuantity === 0) {
-        ElMessage.warning('请选择购买数量')
+      if (!canSubmit.value) {
+        ElMessage.warning('请完善订单信息')
         return
       }
 
       const order = {
-        productId: selectedProduct.id,
-        productName: selectedProduct.name,
-        quantity: totalQuantity,
-        price: selectedProduct.price,
-        total: selectedProduct.price * totalQuantity,
+        productId: form.value.product,
+        productName: selectedProduct.value.name,
+        quantity: quantity.value,
+        price: selectedProduct.value.price,
+        total: selectedProduct.value.price * quantity.value,
         region: form.value.region,
         gender: form.value.gender,
         email: form.value.email
@@ -231,7 +231,7 @@ export default {
 
     return {
       form,
-      quantities,
+      quantity,
       productTypes,
       products,
       regions,
@@ -252,13 +252,17 @@ export default {
   padding: 20px;
 }
 
-.shop-header {
-  max-width: 800px;
+.card-container {
+  max-width: 500px;
   margin: 0 auto 20px;
   background: white;
   border-radius: 8px;
   box-shadow: 0 2px 12px 0 rgba(0,0,0,0.1);
   overflow: hidden;
+}
+
+.shop-header {
+  margin-bottom: 20px;
 }
 
 .header-image {
@@ -278,35 +282,9 @@ export default {
   padding: 20px;
 }
 
-.notice, .merchant-info {
-  margin-bottom: 20px;
-}
-
-.notice h3, .merchant-info h3 {
-  margin: 0 0 10px;
-  color: #303133;
-  font-size: 16px;
-}
-
-.notice p, .merchant-info p {
-  margin: 5px 0;
-  color: #606266;
-  font-size: 14px;
-}
-
-.contact {
-  margin-top: 10px;
-  padding-top: 10px;
-  border-top: 1px solid #ebeef5;
-}
-
 .order-form {
-  max-width: 500px;
-  margin: 0 auto;
-  background: white;
+  composes: card-container;
   padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 12px 0 rgba(0,0,0,0.1);
 }
 
 .product-info {
@@ -350,8 +328,19 @@ export default {
   font-size: 12px;
 }
 
-.quantity-controls {
+.quantity-section {
   margin: 20px 0;
+}
+
+.quantity-title {
+  margin-bottom: 10px;
+  color: #606266;
+  font-size: 14px;
+}
+
+.quantity-controls {
+  display: flex;
+  align-items: center;
 }
 
 .quantity-item {
