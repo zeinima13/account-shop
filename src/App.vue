@@ -1,12 +1,25 @@
 <template>
-  <div id="app">
-    <router-view></router-view>
-  </div>
+  <el-config-provider :locale="zhCn">
+    <div id="app">
+      <router-view></router-view>
+    </div>
+  </el-config-provider>
 </template>
 
 <script>
+import { ElConfigProvider } from 'element-plus'
+import zhCn from 'element-plus/dist/locale/zh-cn.mjs'
+
 export default {
-  name: 'App'
+  name: 'App',
+  components: {
+    ElConfigProvider
+  },
+  setup() {
+    return {
+      zhCn
+    }
+  }
 }
 </script>
 
