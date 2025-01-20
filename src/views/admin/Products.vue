@@ -7,61 +7,76 @@
 
     <el-table :data="products" style="width: 100%">
       <el-table-column prop="name" label="商品名称" />
-      <el-table-column prop="category" label="分类" />
-      <el-table-column prop="price" label="价格" />
-      <el-table-column prop="stock" label="库存" />
-      <el-table-column prop="status" label="状态">
+      <el-table-column prop="category" label="分类">
         <template #default="{ row }">
-          <el-tag :type="row.status === '上架' ? 'success' : 'info'">
-            {{ row.status }}
+          {{ getCategoryName(row.category) }}
+        </template>
+      </el-table-column>
+      <el-table-column prop="price" label="价格" width="100">
+        <template #default="{ row }">
+          ¥{{ row.price }}
+        </template>
+      </el-table-column>
+      <el-table-column prop="stock" label="库存" width="100" />
+      <el-table-column prop="status" label="状态" width="100">
+        <template #default="{ row }">
+          <el-tag :type="row.status === 'active' ? 'success' : 'info'">
+            {{ row.status === 'active' ? '上架' : '下架' }}
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="操作">
+      <el-table-column label="操作" width="200">
         <template #default="{ row }">
-          <el-button-group>
-            <el-button type="primary" @click="editProduct(row)">编辑</el-button>
-            <el-button 
-              :type="row.status === '上架' ? 'warning' : 'success'"
-              @click="toggleStatus(row)"
-            >
-              {{ row.status === '上架' ? '下架' : '上架' }}
-            </el-button>
-            <el-button type="danger" @click="deleteProduct(row)">删除</el-button>
-          </el-button-group>
+          <el-button 
+            size="small" 
+            :type="row.status === 'active' ? 'warning' : 'success'"
+            @click="toggleStatus(row)"
+          >
+            {{ row.status === 'active' ? '下架' : '上架' }}
+          </el-button>
+          <el-button 
+            size="small"
+            type="primary"
+            @click="editProduct(row)"
+          >
+            编辑
+          </el-button>
         </template>
       </el-table-column>
     </el-table>
 
     <!-- 添加/编辑商品对话框 -->
-    <el-dialog 
-      :title="dialogType === 'add' ? '添加商品' : '编辑商品'" 
+    <el-dialog
+      :title="dialogType === 'add' ? '添加商品' : '编辑商品'"
       v-model="dialogVisible"
+      width="500px"
     >
-      <el-form :model="productForm" label-width="80px">
+      <el-form :model="currentProduct" label-width="100px">
         <el-form-item label="商品名称">
-          <el-input v-model="productForm.name" />
+          <el-input v-model="currentProduct.name" />
         </el-form-item>
         <el-form-item label="分类">
-          <el-select v-model="productForm.category">
-            <el-option 
-              v-for="cat in categories" 
-              :key="cat.id" 
-              :label="cat.name" 
-              :value="cat.id"
+          <el-select v-model="currentProduct.category" style="width: 100%">
+            <el-option
+              v-for="category in categories"
+              :key="category.id"
+              :label="category.name"
+              :value="category.id"
             />
           </el-select>
         </el-form-item>
         <el-form-item label="价格">
-          <el-input-number v-model="productForm.price" :min="0" />
+          <el-input-number v-model="currentProduct.price" :min="0" />
         </el-form-item>
         <el-form-item label="库存">
-          <el-input-number v-model="productForm.stock" :min="0" />
+          <el-input-number v-model="currentProduct.stock" :min="0" />
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="saveProduct">确定</el-button>
+        <span class="dialog-footer">
+          <el-button @click="dialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="saveProduct">确定</el-button>
+        </span>
       </template>
     </el-dialog>
   </div>
@@ -69,6 +84,7 @@
 
 <script>
 import { ref, reactive } from 'vue'
+import { ElMessage } from 'element-plus'
 
 export default {
   name: 'AdminProducts',
@@ -76,76 +92,92 @@ export default {
     const products = ref([
       {
         id: 1,
-        name: '微博-信用分510以上---6-9级老号',
-        category: '微博产品',
+        name: 'Steam账号',
+        category: 'game',
         price: 99,
-        stock: 100,
-        status: '上架'
+        stock: 10,
+        status: 'active'
+      },
+      {
+        id: 2,
+        name: 'Netflix会员',
+        category: 'video',
+        price: 29,
+        stock: 20,
+        status: 'active'
+      },
+      {
+        id: 3,
+        name: 'Spotify会员',
+        category: 'music',
+        price: 19,
+        stock: 15,
+        status: 'active'
       }
     ])
 
     const categories = [
-      { id: '1', name: '微博产品' },
-      { id: '2', name: '微博白号' },
-      { id: '3', name: '微博号' }
+      { id: 'game', name: '游戏账号' },
+      { id: 'video', name: '视频会员' },
+      { id: 'music', name: '音乐会员' },
+      { id: 'other', name: '其他账号' }
     ]
 
     const dialogVisible = ref(false)
     const dialogType = ref('add')
-    const productForm = reactive({
+    const currentProduct = reactive({
+      id: null,
       name: '',
       category: '',
       price: 0,
-      stock: 0
+      stock: 0,
+      status: 'active'
     })
+
+    const getCategoryName = (categoryId) => {
+      const category = categories.find(c => c.id === categoryId)
+      return category ? category.name : categoryId
+    }
 
     const showAddDialog = () => {
       dialogType.value = 'add'
-      Object.assign(productForm, {
+      Object.assign(currentProduct, {
+        id: null,
         name: '',
         category: '',
         price: 0,
-        stock: 0
+        stock: 0,
+        status: 'active'
       })
       dialogVisible.value = true
     }
 
     const editProduct = (product) => {
       dialogType.value = 'edit'
-      Object.assign(productForm, product)
+      Object.assign(currentProduct, product)
       dialogVisible.value = true
     }
 
     const saveProduct = () => {
-      // 这里应该调用API保存商品
       if (dialogType.value === 'add') {
-        products.value.push({
-          id: Date.now(),
-          ...productForm,
-          status: '上架'
-        })
+        const newProduct = {
+          ...currentProduct,
+          id: products.value.length + 1
+        }
+        products.value.push(newProduct)
       } else {
-        const index = products.value.findIndex(p => p.id === productForm.id)
+        const index = products.value.findIndex(p => p.id === currentProduct.id)
         if (index !== -1) {
-          products.value[index] = { ...productForm }
+          products.value[index] = { ...currentProduct }
         }
       }
       dialogVisible.value = false
+      ElMessage.success(`${dialogType.value === 'add' ? '添加' : '编辑'}商品成功`)
     }
 
     const toggleStatus = (product) => {
-      product.status = product.status === '上架' ? '下架' : '上架'
-    }
-
-    const deleteProduct = (product) => {
-      ElMessageBox.confirm('确定要删除该商品吗？', '提示', {
-        type: 'warning'
-      }).then(() => {
-        const index = products.value.findIndex(p => p.id === product.id)
-        if (index !== -1) {
-          products.value.splice(index, 1)
-        }
-      })
+      product.status = product.status === 'active' ? 'inactive' : 'active'
+      ElMessage.success(`商品已${product.status === 'active' ? '上架' : '下架'}`)
     }
 
     return {
@@ -153,12 +185,12 @@ export default {
       categories,
       dialogVisible,
       dialogType,
-      productForm,
+      currentProduct,
+      getCategoryName,
       showAddDialog,
       editProduct,
       saveProduct,
-      toggleStatus,
-      deleteProduct
+      toggleStatus
     }
   }
 }
@@ -178,5 +210,15 @@ export default {
 
 .header h2 {
   margin: 0;
+}
+
+@media screen and (max-width: 768px) {
+  .admin-products {
+    padding: 10px;
+  }
+  
+  .el-table {
+    font-size: 14px;
+  }
 }
 </style>
